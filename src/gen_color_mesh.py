@@ -16,62 +16,54 @@ import meshio
 import pymeshlab
 
 import pudb
+import sys
 
 import numpy as np
 import alphashape
 
+from lib.ColorUtils import relative_lightness, lightness_hk
+
 bar = progressbar.ProgressBar(maxval=100, \
     widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage(), ' ', progressbar.ETA()])
 
-def relative_luminance(color1, color2, method='basic'):
-    if method == 'basic':
-        l1 = (luminance_basic(color1) + 0.05)
-        l2 = (luminance_basic(color2) + 0.05)
-    else:
-        l1 = (luminous_from_Luv_plus_nayatani(color1) + 0.05)
-        l2 = (luminous_from_Luv_plus_nayatani(color2) + 0.05)
-    if l1 > l2:
-        rl = l1/l2
-    else:
-        rl = l2/l1
-    if method == 'basic':
-        return rl
-    else:
-        return rl / 100
 
-# measures of relative brighness
-def luminous_from_Luv_plus_nayatani(sRGB):
-    # Adapting Luminance, 250 cd/m^2 represents a typical modern computer display peak luminance.
-    # need to assume average_luminance of final image
-    if sRGB == (0,0,0):
-        sRGB = (1e-10,1e-10,1e-10)
 
-    average_luminance = 0.14
-    L_a = 250 * average_luminance
-    wp = colour.xy_to_Luv_uv([0.31271, 0.32902])
-    xyz = colour.sRGB_to_XYZ(sRGB)
-    luv = colour.XYZ_to_Luv(xyz)
-    uv  = colour.Luv_to_uv(luv)
-    VCC = colour.HelmholtzKohlrausch_effect_luminous_Nayatani1997(
-        uv, wp, L_a, method='VCC')
-    lstar = luv[0]
-    luminous_factor = lstar * VCC
-    return luminous_factor
-
-def luminance_basic(cin):
+def gen_data_hsv_from_hsv(rl_limit_min, rl_limit_max):
     """
-    assume RGB order
+    main function
     """
-    cout = []
-    for ci in cin:
-        if ci <= 0.03928:
-            co = ci/12.92
-        else:
-            co = ((ci+0.055)/1.055) ** 2.4
-        cout.append(co)
+    print(f" {rl_limit_min} < rl < {rl_limit_max}")
+    scale = 25
+    srgb1 = sRGBColor(0, 0, 0)
+    srgb1_values = srgb1.get_value_tuple()
+    lab1 = convert_color(srgb1, LabColor)
+    pts = []
+    step = 1
+    for hsv_h in range(0,360,step):
+        percent_complete = 100 * hsv_h/360
+        bar.update(percent_complete)
+        for hsv_v in np.arange(0, 1.01, 0.05):
+            for hsv_s in np.arange(0, 1.01, 0.05):
+                hsv2 = HSVColor(hsv_h, hsv_s, hsv_v)
+                srgb2 = convert_color(hsv2, sRGBColor)
+                srgb2_values = srgb2.get_value_tuple()
+                rl =  relative_lightness(srgb1_values, srgb2_values)
+                #print(f"{srgb2.get_rgb_hex()} : {luminous_from_Luv_plus_nayatani(srgb2_values)} {luminance_basic(srgb2_values)} rl={rl}")
+                if rl > rl_limit_min and rl < rl_limit_max:
+                    # radius_factor decreases with value hsv_v as it goes from 1 on top to 0
+                    r = hsv_s * hsv_v
+                    a = hsv_h * math.pi / 180
+                    x,y = pol2cart(r,a)
+                    z = hsv_v
+                    pts.append([x,y,z])
+                    test_hsv_to_rgb(hsv2, [x,y,z])
+                    #print(f"{rgb_r} {rgb_g} {rgb_b} rl={int(rl)}")
 
-    L = 0.2126 * cout[0] + 0.7152 * cout[1] + 0.0722 * cout[2]
-    return L
+    bar.finish()
+
+    points = np.array(pts)
+    return points
+
 
 def gen_data_hsv_from_rgb(rl_limit_min, rl_limit_max):
     """
@@ -91,18 +83,81 @@ def gen_data_hsv_from_rgb(rl_limit_min, rl_limit_max):
             for rgb_b in range(0,256,step):
                 srgb2 = sRGBColor(rgb_r/255.,rgb_g/255., rgb_b/255.)
                 srgb2_values = srgb2.get_value_tuple()
-                rl =  relative_luminance(srgb1_values, srgb2_values, method='basic')
+                rl =  relative_lightness(srgb1_values, srgb2_values)
                 #print(f"{srgb2.get_rgb_hex()} : {luminous_from_Luv_plus_nayatani(srgb2_values)} {luminance_basic(srgb2_values)} rl={rl}")
                 if rl > rl_limit_min and rl < rl_limit_max:
-                    x = rgb_r/255.
-                    y = rgb_g/255.
-                    z = rgb_b/255.
+                    hsv = convert_color(srgb2, HSVColor)
+                    r = hsv.hsv_s
+                    a = hsv.hsv_h * math.pi / 180
+                    x,y = pol2cart(r,a)
+                    z = hsv.hsv_v
                     pts.append([x,y,z])
                     #print(f"{rgb_r} {rgb_g} {rgb_b} rl={int(rl)}")
+                else:  
+                    print(f"FOIOIIO rl = {rl}")
+
     bar.finish()
 
     points = np.array(pts)
     return points
+
+# from https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
+
+def pol2cart(rho, phi):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return(x, y)
+
+def xyz_point_to_hsv_color(pt):
+    x, y, z = pt
+    r,a = cart2pol(x,y)
+    hsv_h = a * 180 / math.pi
+    if hsv_h < 0:
+        hsv_h += 360
+    if z != 0:
+        hsv_s = r / z
+    else:
+        hsv_s = 0
+
+    hsv_v = z
+    hsv = HSVColor(hsv_h, hsv_s, hsv_v)
+    return hsv
+
+# TODO: vectorize this see https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
+def hsv_coords_to_rgb_colors(points):
+
+    colors = []
+    for pt in points:
+        hsv = xyz_point_to_hsv_color(pt)
+        srgb = convert_color(hsv, sRGBColor)
+        colors.append([srgb.rgb_r, srgb.rgb_g, srgb.rgb_b])
+
+    return np.array(colors)
+
+
+
+def test_hsv_to_rgb(ohsv, pt):
+
+    nhsv = xyz_point_to_hsv_color(pt)
+
+    #print(f" H mismatch between o:{round(ohsv.hsv_h)} n:{round(nhsv.hsv_h)} diff:{round(ohsv.hsv_h-nhsv.hsv_h)}")
+    if not math.isclose(ohsv.hsv_h , nhsv.hsv_h) and nhsv.hsv_s>0:
+        print(f" H mismatch between o:{round(ohsv.hsv_h)} n:{round(nhsv.hsv_h)} diff:{round(ohsv.hsv_h-nhsv.hsv_h)} nhsv.hsv_s={nhsv.hsv_s}")
+    if not math.isclose(ohsv.hsv_s , nhsv.hsv_s) and nhsv.hsv_v>0:
+        print(f" S mismatch between o:{ohsv.hsv_s} n:{nhsv.hsv_s}")
+    if not math.isclose(ohsv.hsv_v , nhsv.hsv_v) and nhsv.hsv_s>0:
+        print(f" V mismatch between o:{ohsv.hsv_v} n:{nhsv.hsv_v}")
+
+    srgb = convert_color(nhsv, sRGBColor)
+    rgbhex =  srgb.get_rgb_hex()
+    
+
+    if len(rgbhex) != 7:
+        print(f"pt={pt} ohsv={ohsv} new={nhsv} -> {srgb} -> {rgbhex}")
 
 def gen_data_rgb_from_rgb(rl_limit_min, rl_limit_max):
     """
@@ -122,7 +177,8 @@ def gen_data_rgb_from_rgb(rl_limit_min, rl_limit_max):
             for rgb_b in range(0,256,step):
                 srgb2 = sRGBColor(rgb_r/255.,rgb_g/255., rgb_b/255.)
                 srgb2_values = srgb2.get_value_tuple()
-                rl =  relative_luminance(srgb1_values, srgb2_values, method='basic')
+                rl =  relative_lightness(srgb1_values, srgb2_values)
+                #print(f"{srgb2.get_rgb_hex()} : {lightness_hk(srgb1_values)} {lightness_hk(srgb2_values)} rl={rl}")
                 #print(f"{srgb2.get_rgb_hex()} : {luminous_from_Luv_plus_nayatani(srgb2_values)} {luminance_basic(srgb2_values)} rl={rl}")
                 if rl > rl_limit_min and rl < rl_limit_max:
                     x = rgb_r/255.
@@ -136,15 +192,15 @@ def gen_data_rgb_from_rgb(rl_limit_min, rl_limit_max):
     return points
 
 def add_and_save_mesh(step, tag, m, ms):
-    steptag = f"{step}_{tag}"
-    ms.add_mesh(m, steptag)
-    filename = f"data/data_{steptag}.ply"
+    tagstep = f"{tag}_{step}"
+    ms.add_mesh(m, tagstep)
+    filename = f"data/data_{tagstep}.ply"
     ms.save_current_mesh(filename)
     print(f"{step:10s} : saved {m.vertex_number():5d} vertex and {m.face_number():5d} faces to {filename}")
 
-def create_mesh(points, rl_limit_min, rl_limit_max):
+def create_mesh(points, mode, rl_limit_min, rl_limit_max,):
 
-    tag = f"rgb_{rl_limit_min}_to_{rl_limit_max}"
+    tag = f"{mode}_{rl_limit_min}_to_{rl_limit_max}"
     print(f" creating mesh for {tag} with {len(points)} points")
     if len(points)  < 100:
         print(f" .. skipping too few points")
@@ -174,6 +230,7 @@ def create_mesh(points, rl_limit_min, rl_limit_max):
     #default_params = ms.filter_parameter_values('apply_coord_laplacian_smoothing')
     step = "simplify"
     m = ms.current_mesh()
+    #ms.meshing_decimation_quadric_edge_collapse(targetfacenum=2000)
     ms.meshing_decimation_quadric_edge_collapse(targetperc=0.5)
     ms.apply_coord_laplacian_smoothing(stepsmoothnum=5)
     add_and_save_mesh(step, tag, m, ms)
@@ -182,9 +239,14 @@ def create_mesh(points, rl_limit_min, rl_limit_max):
     step = "color"
     verts = m.vertex_matrix()
     faces = m.face_matrix()
+    if mode == "rgb":
+        colors = verts
+    else:
+        colors = hsv_coords_to_rgb_colors(verts)
+
     N = m.vertex_number()
     vert_colors = np.ones((N,4))
-    vert_colors[:,:-1] = verts
+    vert_colors[:,:-1] = colors
 
     m = pymeshlab.Mesh( vertex_matrix=verts, face_matrix=faces, v_color_matrix=vert_colors)
 
@@ -219,23 +281,38 @@ def create_mesh(points, rl_limit_min, rl_limit_max):
     """
 
 
+def gen_data(mode, rl_limit_min, rl_limit_max):
+    """
+    support different mesh geoms
+    """
+    if mode == "hsv":
+        return gen_data_hsv_from_hsv(rl_limit_min, rl_limit_max)
+    elif mode == "rgb":
+        return gen_data_rgb_from_rgb(rl_limit_min, rl_limit_max)
+    elif mode == "hsv_from_rgb":
+        return gen_data_hsv_from_rgb(rl_limit_min, rl_limit_max)
+    else:
+        print(f"ERROR")
+        sys.exit(-1)
+
 
 
 if __name__ == "__main__":
 
-    rl_max = 20
+    rl_max = 21
 
-    for limit in  range(5,16,1):
-        for width in range(5,40,5):
-            rl_limit_min = limit 
-            rl_limit_max = limit + width
-            if rl_limit_max > 20:
-                continue
-            print(f"{rl_limit_min} -> {rl_limit_max}")
+    limitpairs = [[0,25], [5,10]]
+    limitpairs = [[0,5], [5,10], [10,15], [15,21]]
 
-            points = gen_data_rgb_from_rgb(rl_limit_min, rl_limit_max)
-            create_mesh(points, rl_limit_min, rl_limit_max)
+    mode = "rgb"
+    for rl_limit_min,rl_limit_max in limitpairs:
+        points = gen_data(mode, rl_limit_min, rl_limit_max)
+        create_mesh(points, mode, rl_limit_min, rl_limit_max)
 
 
+    mode = "hsv"
+    for rl_limit_min,rl_limit_max in limitpairs:
+        points = gen_data(mode, rl_limit_min, rl_limit_max)
+        create_mesh(points, mode, rl_limit_min, rl_limit_max)
 
 
