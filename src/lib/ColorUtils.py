@@ -124,9 +124,18 @@ class ColorUtils:
         Ybg = self.luminance_basic(cbg)
         return SAPC_0_98G_4g_minimal.APCAcontrast(Yfg,Ybg)
 
-    def contrast_diff_lstar(self, cfg, cbg):
+    def delta_lightness(self, cfg, cbg):
         return self.lightness_hk_rgb(cfg) -  self.lightness_hk_rgb(cbg)
 
+    @staticmethod
+    def delta_hyab(c1, c2):
+        """
+         ΔL*+Euclidean (a*,b*)
+         Euclidean (a*,b*) =  [(c1.a* − c2.a*)^2 + (c1.b* − c2.b*)^2]^1/2
+         math.dist(p, q) = sqrt((p[0] - q[0]) ** 2.0) + (p[1] - q[1]) ** 2.0))
+        """
+        delta = abs(c1.lab_l - c2.lab_l) + math.dist([c1.lab_a,c1.lab_b], [c2.lab_a,c2.lab_b])
+        return delta
 
     @staticmethod
     def rgb_to_hex(colors_rgb):
@@ -138,12 +147,16 @@ class ColorUtils:
         return colors_rgbhex
  
     @staticmethod
-    def delta_e_rgb(c1,c2):
+    def delta_rgb(c1,c2,metric):
         srgb1 =  sRGBColor(*c1)
         srgb2 =  sRGBColor(*c2)
         lab1 = convert_color(srgb1, LabColor)
         lab2 = convert_color(srgb2, LabColor)
-        delta = delta_e_cie2000(lab1,lab2)
+        if metric == "delta_e2000":
+            delta = delta_e_cie2000(lab1,lab2)
+        elif metric == "hyab":
+            delta = ColorUtils.delta_hyab(lab1,lab2)
+
         return delta
 
     @staticmethod
@@ -161,6 +174,10 @@ class ColorUtils:
 
     def delta_e_rgbhex(self, color1, color2):
         delta = delta_e_cie2000(self.convert_color_rgbhex_to_lab(color1), self.convert_color_rgbhex_to_lab(color2))
+        return delta
+
+    def delta_hyab_rgbhex(self, color1, color2):
+        delta = delta_hyab_lab(self.convert_color_rgbhex_to_lab(color1), self.convert_color_rgbhex_to_lab(color2))
         return delta
 
 
@@ -189,7 +206,7 @@ class ColorUtils:
 
     def print_delta_e_rgb_stats(self, n_samples, colors_rgb):
 
-        colors_rgbhex = rgb_to_hex(colors_rgb)
+        colors_rgbhex = self.rgb_to_hex(colors_rgb)
 
         min_delta = math.inf
         for c1 in colors_rgbhex:
@@ -202,9 +219,12 @@ class ColorUtils:
                         min_delta = delta
             print("")
         print("")
-        ret = f"with n={n_samples} min deltaE = {round(min_delta)}"
-        print(ret)
-        return round(min_delta)
+        if min_delta == math.inf:
+            return min_delta
+        else:
+            ret = f"with n={n_samples} min deltaE = {round(min_delta)}"
+            print(ret)
+            return round(min_delta)
 
 
     def saveplot_delta_e_rgb_stats(self, tag, n_samples, colors_rgb, min_delta_e):
@@ -215,20 +235,43 @@ class ColorUtils:
         colors_rgbhex = self.rgb_to_hex(colors_rgb)
         plt.style.use(['dark_background'])
 
+        fig, ax = plt.subplots()
+        gs = fig.add_gridspec(2, 2, hspace=0, wspace=0)
+        axs = gs.subplots()
+        (ax1, ax2), (ax3, ax4) = axs
+
         # multiple line plots
         for hex in colors_rgbhex:
             label = f" {hex}"
             df=pd.DataFrame({'x_values': range(1,11), label: np.random.randn(10)})
-            line, = plt.plot( 'x_values', label, data=df, marker='o', markerfacecolor=hex, markersize=12, color=hex, linewidth=4)
-
+            ax1.plot( 'x_values', label, data=df, marker='o', markerfacecolor=hex, markersize=12, color=hex, linewidth=4)
 
         # show legend
-        comment = f"with n={n_samples} min deltaE = {round(min_delta_e)}"
-        plt.title(comment)
+        if min_delta_e == math.inf:
+            comment = f"with n={n_samples} lightness={tag} min deltaE = undefined"
+        else:
+            comment = f"with n={n_samples} lightness={tag} min deltaE = {round(min_delta_e)}"
+
+        for ax in axs.flat:
+            ax.axes.xaxis.set_ticklabels([])
+            ax.axes.yaxis.set_ticklabels([])
+
+        fig.suptitle(comment)
         #plt.legend(loc='right')
-        plt.legend(loc=7)
+        #ax1.legend(loc=7)
+        lines, labels = ax1.get_legend_handles_labels()
+        lg = plt.legend(lines, labels, bbox_to_anchor=(1.05, 1.0), loc='center left')
+
+
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
-        plt.savefig(f"{dir}/img{n_samples}.png")
+        print(f"writing to {dir}/img{n_samples}.png")
+
+        plt.savefig(f"{dir}/img{n_samples}.png",
+                dpi=300, 
+                transparent=True,
+                format='png', 
+                bbox_extra_artists=(lg,), 
+                bbox_inches='tight')
 
         plt.close()
 

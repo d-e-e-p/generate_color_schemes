@@ -23,14 +23,15 @@ import re
 
 import numpy as np
 
-from lib.ColorUtils import delta_e_rgb
+from lib.ColorUtils import ColorUtils
 
+# globals
+c = ColorUtils()
 bar = progressbar.ProgressBar(maxval=100, \
     widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage(), ' ', progressbar.ETA()])
 
 
-
-def save_delta_e_rgb(pts, tag):
+def save_distance_rgb(pts, tag, metric):
 
     distance_matrix = []
     num_pts = len(pts)
@@ -39,7 +40,7 @@ def save_delta_e_rgb(pts, tag):
     for c1 in pts:
         line = []
         for c2 in pts:
-            distance = delta_e_rgb(c1,c2)
+            distance = c.delta_rgb(c1,c2,metric)
             line.append(distance)
         percent_complete = 100 * idx/num_pts
         bar.update(percent_complete)
@@ -55,17 +56,26 @@ def save_delta_e_rgb(pts, tag):
     print(f"distance_matrix of {distance_matrix.shape} saved to {filename}")
 
 
+def get_ply_files():
+    data_dir = "data/"
+    ply_files = []
+    for datafile in sorted(glob(os.path.join(data_dir, '*rgb*' + "_color.ply"))):
+        match = re.search(r"_(\d+_to_\d+)_color.ply", datafile)
+        if match:
+            tag = match[1]
+            ply_files.append([tag,datafile])
+    print(f"ply_files: {ply_files}")
+    return ply_files
 
 
 if __name__ == "__main__":
-
-    data_dir = "data/"
-    for datafile in glob(os.path.join(data_dir, '*' + "_web.ply")):
-            print(f"loading {datafile}")
-            hull = meshio.read(datafile)
-            match = re.search(r"_(\d+_to_\d+)_web.ply", datafile)
-            if match:
-                tag = match[1]
-                save_delta_e_rgb(hull.points, tag)
+    metric = 'delta_e2000'
+    metric = 'hyab'
+    ply_files = get_ply_files()
+    ply_files = [['60_to_80', 'data/data_rgb_60_to_80_color.ply']]
+    for tag,datafile in ply_files:
+        print(f"loading {datafile}")
+        hull = meshio.read(datafile)
+        save_distance_rgb(hull.points, tag, metric)
 
 

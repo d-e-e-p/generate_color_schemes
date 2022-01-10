@@ -49,7 +49,7 @@ def is_float(element):
 
 def compare_contrast_ratios(xyz):
 
-    lstardelta = c.contrast_diff_lstar(xyz, bg_grey)
+    lstardelta = c.delta_lightness(xyz, bg_grey)
 
     cr_APCA = c.contrast_ratio_APCA(
             colour.XYZ_to_sRGB(xyz),

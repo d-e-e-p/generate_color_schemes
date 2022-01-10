@@ -22,6 +22,7 @@ class FPS:
         self.selected_pts = None
         self.selected_idx = []
         self.n_selected_pts = 1
+        self.current_distance = math.inf
 
     def run(self):
         num_runs = 1000
