@@ -33,7 +33,7 @@ def load_distance_matrix_rgb(tag):
     return distance_matrix
 
 def write_json_file(filename, items):
-    json = dumps(items, indent=4)
+    json = dumps(items, indent=4, allow_nan=True, conv_str_byte=True)
     fp = open(filename , 'w')
     fp.write(json)
     fp.close()
@@ -43,9 +43,8 @@ def run_fps(pts, tag):
     distance_matrix = load_distance_matrix_rgb(tag)
 
     color_list = {}
-    delta_e_list = {}
-    #for n_samples in range(1,26):
-    for n_samples in [25]:
+    delta_list = {}
+    for n_samples in range(1,26):
         fps = FPS(pts, distance_matrix,  n_samples)
         print(f"Running FPS over {len(pts)} points and getting {n_samples} samples")
         selected_pts = fps.run()  # Get all samples.
@@ -53,25 +52,19 @@ def run_fps(pts, tag):
         min_delta_e = c.print_delta_e_rgb_stats(n_samples,selected_pts)
         c.saveplot_delta_e_rgb_stats(tag, n_samples,selected_pts, min_delta_e)
         color_list[n_samples] = c.rgb_to_hex(selected_pts)
-        delta_e_list[n_samples] = min_delta_e
+        delta_list[n_samples] = min_delta_e
 
     # save color_list and delta results
     file_color_list = f"res/rgb_{tag}_color_list.json"
     write_json_file(file_color_list, color_list)
 
-    #file_delta_e_list = f"res/rgb_{tag}_delta_e_list.json"
-    #write_json_file(file_delta_e_list, delta_e_list)
+    file_delta_list = f"res/rgb_{tag}_delta_list.json"
+    write_json_file(file_delta_list, delta_list)
 
 
 
 if __name__ == '__main__':
 
-    ply_files = [['60_to_80', 'data/data_rgb_60_to_80_color.ply']]
-    for tag,datafile in ply_files:
-        print(f"loading {datafile}")
-        hull = meshio.read(datafile)
-        run_fps(hull.points, tag)
-        sys.exit()
 
     ply_files = get_ply_files()
     for tag,datafile in ply_files:

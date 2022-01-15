@@ -386,9 +386,8 @@ def add_and_save_mesh(step, tag, ms, m=None):
     dim = f"[{bbox.dim_x():.1f},{bbox.dim_y():.1f},{bbox.dim_z():.1f}]"
     print(f"{step:10s} : saved {ms.current_mesh().vertex_number():5d} vertex and {m.face_number():5d} faces of {dim} to {filename} ")
 
-def create_mesh(points, mode, dl_min, dl_max,):
+def create_mesh(points, mode, tag):
 
-    tag = f"{mode}_{dl_min}_to_{dl_max}"
     print(f" creating mesh for {tag} with {len(points)} points")
     if len(points)  < 100:
         print(f" .. skipping too few points")
@@ -413,13 +412,19 @@ def create_mesh(points, mode, dl_min, dl_max,):
         hull = alphashape.alphashape(points, alpha)
         vertices = hull.vertices
         faces = hull.faces
+        m = pymeshlab.Mesh(vertices, faces)
     else:
-        hull = ConvexHull(points, qhull_options='Q12')
-        vertices = hull.points
-        faces = hull.simplices
+        pyhull = False
+        if pyhull:
+            hull = ConvexHull(points, qhull_options='Q12')
+            vertices = hull.points
+            faces = hull.simplices
+            m = pymeshlab.Mesh(vertices, faces)
+        else:
+            ms.convex_hull()
+            m = ms.current_mesh()
         
     # load into meshlab to simplify by 50%
-    m = pymeshlab.Mesh(vertices, faces)
     add_and_save_mesh(step, tag, ms, m)
 
     # filter: simplify and smooth
@@ -436,7 +441,7 @@ def create_mesh(points, mode, dl_min, dl_max,):
         # history: smoothflag=False is definately needed
         #{'iterations': 3, 'adaptive': True, 'selectedonly': False, 'targetlen': 0.03464101627469063, 'featuredeg': 30.0, 'checksurfdist': False,
         #'maxsurfdist': 0.03464101627469063, 'splitflag': True, 'collapseflag': False, 'swapflag': True, 'smoothflag': False, 'reprojectflag': True}
-        ms.meshing_isotropic_explicit_remeshing(iterations=3, adaptive=False, collapseflag=False, smoothflag=False)
+        #ms.meshing_isotropic_explicit_remeshing(iterations=3, adaptive=False, collapseflag=False, smoothflag=False)
         v_count_after  = ms.current_mesh().vertex_number()
         #print(f"meshing_isotropic_explicit_remeshing increased v from {v_count_before} to {v_count_after}")
     else:
@@ -545,19 +550,24 @@ if __name__ == "__main__":
 
     #starts = range(4,10)
     #widths = range(1,10)
+    bloat = 0.5
+    print(f"bloat = {bloat}")
 
-    starts = [0]
-    widths = range(12)
-    bloat  = 0
-    limitpairs = get_limitpairs(starts,widths,bloat)
+    starts = range(10)
+    widths = [1]
+    limitpairs = get_limitpairs(starts,widths)
     #sys.exit()
 
     #for mode in ['rgb','hsv']:
-    for mode in ['okhsl']:
+    for mode in ['okhsl', 'hsl', ]:
         m = gen_lightness_matrix(mode)
         for dl_min,dl_max in limitpairs:
-            points = gen_data(mode, m, dl_min, dl_max)
-            create_mesh(points, mode, dl_min, dl_max)
+            tag = f"{mode}_{dl_min}_to_{dl_max}"
+            # specialcase last chunk for lightness > 1 (does not affect tag)
+            if dl_max == 1:
+                dl_max = 1.1
+            points = gen_data(mode, m, dl_min - bloat, dl_max + bloat)
+            create_mesh(points, mode, tag)
 
 
 

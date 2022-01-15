@@ -72,7 +72,7 @@ if __name__ == "__main__":
     metric = 'delta_e2000'
     metric = 'hyab'
     ply_files = get_ply_files()
-    ply_files = [['60_to_80', 'data/data_rgb_60_to_80_color.ply']]
+    #ply_files = [['60_to_80', 'data/data_rgb_60_to_80_color.ply']]
     for tag,datafile in ply_files:
         print(f"loading {datafile}")
         hull = meshio.read(datafile)

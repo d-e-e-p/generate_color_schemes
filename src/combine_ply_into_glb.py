@@ -2,6 +2,8 @@
 
 import bpy
 import os
+from glob import glob
+import re
 
 print(f" bpy = {bpy}")
 
@@ -16,7 +18,7 @@ def delete_all_mesh():
     # Call the operator only once
     bpy.ops.object.delete()
 
-def run(bloat):
+def load_bloat(bloat):
 
     print(f"running with bloat = {bloat}")
 
@@ -43,14 +45,49 @@ def run(bloat):
     #bpy.ops.wm.open_mainfile(filepath=bpy.data.filepath)
     bpy.ops.export_scene.gltf(filepath=f"models/rgb_b{bloat}.glb", export_draco_mesh_compression_enable=True,export_draco_color_quantization=0,export_colors=True)
 
+def create_glb(type, files):
+    print(f"{type} : loading {files}")
+    bpy.ops.wm.window_new_main()
+    delete_all_mesh()
+    for f in files:
+        bpy.ops.import_mesh.ply(filepath=f)
+    bpy.ops.export_scene.gltf(filepath=f"models/{type}.glb", 
+            export_draco_mesh_compression_enable=True,
+            export_draco_color_quantization=0,
+            export_colors=True)
 
-if __name__ == '__main__':
+
+def run_bloat():
 
     for bloat in "0 1 2 5".split():
         #bpy.ops.wm.window_close()
         bpy.ops.wm.window_new_main()
         delete_all_mesh()
         run(bloat)
+
+def filter_files(files):
+
+    ply_files = []
+    for f in files:
+        match = re.search(r"_(\d+)_to_(\d+)_color.ply", f)
+        if match:
+            st = int(match[1])
+            en = int(match[2])
+            if (en - st == 10):
+                ply_files.append(f)
+    return ply_files
+
+if __name__ == '__main__':
+
+    types = "rgb hsl okhsl".split()
+    types = "hsl okhsl".split()
+
+    data_dir = "data/"
+    for type in types:
+        pattern =  f"data*{type}*_color.ply"
+        files = sorted(glob(os.path.join(data_dir, pattern)))
+        ply_files = filter_files(files)
+        create_glb(type, ply_files)
 
 
     bpy.ops.wm.quit_blender()

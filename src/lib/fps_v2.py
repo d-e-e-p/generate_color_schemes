@@ -6,6 +6,9 @@ import numpy as np
 import pudb
 import math
 
+from lib.ColorUtils import ColorUtils
+
+
 class FPS:
     def __init__(self, pcd_xyz, distance_matrix, n_samples):
         self.n_samples = n_samples
@@ -29,7 +32,8 @@ class FPS:
         res = []
         for run in range(num_runs):
             selected_pts = self.run_once(run)
-            res.append([self.current_distance, selected_pts.tolist()])
+            if self.run_does_not_have_any_invalid_colors(selected_pts):
+                res.append([self.current_distance, selected_pts.tolist()])
 
         best_res = sorted(res, key=lambda x: (-x[0]))[0]
         return best_res[1]
@@ -112,3 +116,14 @@ class FPS:
 
     def __distance__(self, a, b):
         return np.linalg.norm(a - b, ord=2, axis=2)
+
+    def run_does_not_have_any_invalid_colors(self, colors_rgb):
+
+        if colors_rgb.min() < 0:
+            return False
+        if colors_rgb.max() > 1:
+            return False
+        return True
+        
+
+        

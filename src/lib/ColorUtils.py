@@ -78,6 +78,10 @@ class ColorUtils:
         xyz = colour.sRGB_to_XYZ(rgb)
         return self.lightness_hk_xyz(xyz)
 
+    def lightness_hk_rgbhex(self, rgbhex):
+        rgb = HEX_to_RGB(rgbhex) 
+        xyz = colour.sRGB_to_XYZ(rgb)
+        return self.lightness_hk_xyz(xyz)
 
     def luminance_basic(self, cin):
         """
@@ -222,20 +226,37 @@ class ColorUtils:
         if min_delta == math.inf:
             return min_delta
         else:
-            ret = f"with n={n_samples} min deltaE = {round(min_delta)}"
+            ret = f"with n={n_samples} min delta = {round(min_delta)}"
             print(ret)
             return round(min_delta)
 
 
     def saveplot_delta_e_rgb_stats(self, tag, n_samples, colors_rgb, min_delta_e):
+        """
+        plt.style.use(['dark_background'])
+         ['Solarize_Light2', '_classic_test_patch', '_mpl-gallery', '_mpl-gallery-nogrid', 'bmh', 'classic', 'dark_background', 'fast', 'fivethirtyeight', 'ggplot', 'grayscale', 'seaborn', 'seaborn-bright', 'seaborn-colorblind', 'seaborn-dark', 'seaborn-dark-palette', 'seaborn-darkgrid', 'seaborn-deep', 'seaborn-muted', 'seaborn-notebook', 'seaborn-paper', 'seaborn-pastel', 'seaborn-poster', 'seaborn-talk', 'seaborn-ticks', 'seaborn-white', 'seaborn-whitegrid', 'tableau-colorblind10']
+        """
 
-        dir = f"res/images_{tag}"
-        Path(dir).mkdir(parents=True, exist_ok=True)
+        if min_delta_e == math.inf:
+            comment = f"{n_samples} colors with lightness={tag} delta = undefined"
+        else:
+            comment = f"{n_samples} colors with lightness={tag} delta = {round(min_delta_e)}"
+
+        styles = {'dark': 'dark_background', 'light': 'classic'}
+        for type,style in styles.items():
+            dir = f"res/images_{tag}/{type}"
+            Path(dir).mkdir(parents=True, exist_ok=True)
+            filename = f"{dir}/img{n_samples}.png"
+            self.plot_helper(style, comment, n_samples, colors_rgb, filename)
+
+
+    def plot_helper(self, style, comment, n_samples, colors_rgb, filename):
 
         colors_rgbhex = self.rgb_to_hex(colors_rgb)
-        plt.style.use(['dark_background'])
 
+        plt.style.use([style])
         fig, ax = plt.subplots()
+
         gs = fig.add_gridspec(2, 2, hspace=0, wspace=0)
         axs = gs.subplots()
         (ax1, ax2), (ax3, ax4) = axs
@@ -243,20 +264,26 @@ class ColorUtils:
         # multiple line plots
         for hex in colors_rgbhex:
             label = f" {hex}"
-            df=pd.DataFrame({'x_values': range(1,11), label: np.random.randn(10)})
+            df=pd.DataFrame({'x_values': range(1,6), label: np.random.randn(5)})
             ax1.plot( 'x_values', label, data=df, marker='o', markerfacecolor=hex, markersize=12, color=hex, linewidth=4)
+        # random pie chart
+        x = np.random.randint(1,100,len(colors_rgbhex))
+        ax2.pie(x,colors=colors_rgbhex)
+        ax2.axis('equal') 
 
-        # show legend
-        if min_delta_e == math.inf:
-            comment = f"with n={n_samples} lightness={tag} min deltaE = undefined"
-        else:
-            comment = f"with n={n_samples} lightness={tag} min deltaE = {round(min_delta_e)}"
+        # random bar chart
+        # ar[::-1] flips values to be fair
+        ax3.bar(range(n_samples),x[::-1], color=colors_rgbhex)
+
+        # random streamgraph
+        ys = np.random.randint(1,100,size=(n_samples,5))
+        ax4.stackplot(range(5), ys, baseline='wiggle', colors=colors_rgbhex)
 
         for ax in axs.flat:
             ax.axes.xaxis.set_ticklabels([])
             ax.axes.yaxis.set_ticklabels([])
 
-        fig.suptitle(comment)
+        tl = fig.suptitle(comment)
         #plt.legend(loc='right')
         #ax1.legend(loc=7)
         lines, labels = ax1.get_legend_handles_labels()
@@ -264,14 +291,15 @@ class ColorUtils:
 
 
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
-        print(f"writing to {dir}/img{n_samples}.png")
 
-        plt.savefig(f"{dir}/img{n_samples}.png",
-                dpi=300, 
-                transparent=True,
-                format='png', 
-                bbox_extra_artists=(lg,), 
-                bbox_inches='tight')
+
+        #print(f"writing to {filename}")
+        plt.savefig(filename,
+           dpi=300, 
+           transparent=True,
+           format='png', 
+           bbox_extra_artists=(lg,tl), 
+           bbox_inches='tight')
 
         plt.close()
 
