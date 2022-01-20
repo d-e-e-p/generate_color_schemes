@@ -7,15 +7,11 @@ gen_distance_matrix.py
 
 """
 
-import lib
 
 from glob import glob
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-import logging
-import colorama
-from colorama import Fore, Back, Style
 
 import meshio
 import progressbar

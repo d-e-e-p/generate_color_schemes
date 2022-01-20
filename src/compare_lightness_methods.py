@@ -9,21 +9,16 @@ from https://github.com/colour-science/colour/blob/develop/colour/examples/appea
 import sys
 import os
 import colour
-from colour.appearance import XYZ_to_Nayatani95
 from colour.plotting import colour_style, plot_multi_colour_swatches
 from colour.utilities import message_box
 from colour.notation.hexadecimal import (
     RGB_to_HEX,
-    HEX_to_RGB,
 )
 import numpy as np
-import pudb
-import matplotlib
 import math
 
 # Js2Py of https://github.com/Myndex/SAPC-APCA/blob/master/JS/SAPC_0_98G_4g_minimal.js
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-from lib.SAPC_0_98G_4g_minimal import SAPC_0_98G_4g_minimal
 from lib.ColorUtils import ColorUtils
 
 

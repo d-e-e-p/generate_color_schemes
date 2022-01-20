@@ -3,10 +3,8 @@ mod from https://github.com/ziruiw-dev/farthest-point-sampling
 """
 
 import numpy as np
-import pudb
 import math
 
-from lib.ColorUtils import ColorUtils
 
 
 class FPS:

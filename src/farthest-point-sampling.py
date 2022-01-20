@@ -6,17 +6,9 @@
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-import logging
-import colorama
-from colorama import Fore, Back, Style
-import pudb
 import numpy as np
-from glob import glob
 import meshio
-import re
-import math
-from json_tricks import dumps, loads
-from pathlib import Path
+from json_tricks import dumps
 
 
 from lib.ColorUtils import ColorUtils

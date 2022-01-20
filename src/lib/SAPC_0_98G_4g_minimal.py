@@ -5,7 +5,6 @@ __all__ = ['SAPC_0_98G_4g_minimal']
 #   https://github.com/Myndex/SAPC-APCA/blob/master/JS/SAPC_0_98G_4g_minimal.js
 
 from js2py.pyjs import *
-import pudb
 
 # setting scope
 var = Scope( JS_BUILTINS )
@@ -27,7 +26,6 @@ def PyJsHoisted_sRGBtoY_(sRGBcolor, this, arguments, var=var):
     var.put('r', ((var.get('sRGBcolor')&Js(16711680))>>Js(16.0)))
     var.put('g', ((var.get('sRGBcolor')&Js(65280))>>Js(8.0)))
     var.put('b', (var.get('sRGBcolor')&Js(255)))
-    pass
     return (((var.get('sRco')*var.get('simpleExp')(var.get('r')))+(var.get('sGco')*var.get('simpleExp')(var.get('g'))))+(var.get('sBco')*var.get('simpleExp')(var.get('b'))))
 PyJsHoisted_sRGBtoY_.func_name = 'sRGBtoY'
 var.put('sRGBtoY', PyJsHoisted_sRGBtoY_)
@@ -67,9 +65,6 @@ var.put('loBoWfactor', var.put('loWoBfactor', Js(27.7847239587675)))
 var.put('loBoWoffset', var.put('loWoBoffset', Js(0.027)))
 var.put('loClip', Js(0.001))
 var.put('deltaYmin', Js(0.0005))
-pass
-pass
-pass
 
 
 # Add lib to the module scope

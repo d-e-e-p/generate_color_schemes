@@ -3,19 +3,15 @@
 # generate objects containing colors within relative luminance limits
 #
 
-import colour
 import progressbar
 
-from colormath.color_diff import delta_e_cmc, delta_e_cie2000
 from colormath.color_objects import LabColor, sRGBColor, HSVColor, HSLColor
 from colormath.color_conversions import convert_color
 from collections import defaultdict
 import math
 
-import meshio
 import pymeshlab
 
-import pudb
 import sys
 
 import numpy as np

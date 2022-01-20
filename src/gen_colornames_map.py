@@ -7,31 +7,22 @@ src/gen_colornames_map.py
 
 """
 
-import lib
 
 from glob import glob
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-import logging
-import colorama
-from colorama import Fore, Back, Style
 
-import meshio
 import progressbar
 import itertools
-import re
 from json_tricks import dumps, loads
 
-import numpy as np
 
 from colour.notation.hexadecimal import (
-    RGB_to_HEX,
     HEX_to_RGB,
     )
 
 from lib.ColorUtils import ColorUtils
-from gen_distance_matrix import save_distance_rgb
 
 # globals
 c = ColorUtils()

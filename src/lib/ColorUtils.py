@@ -2,18 +2,13 @@
 class that deals with color convertion and measurement routines
 """
 
-import pudb
-from colormath.color_diff import delta_e_cmc, delta_e_cie2000
+from colormath.color_diff import delta_e_cie2000
 from colormath.color_objects import LabColor, sRGBColor, HSVColor, HSLColor
 from colormath.color_conversions import convert_color
 
 # TODO: switch from colormath to colour
 import colour
-from colour.appearance import XYZ_to_Nayatani95
-from colour.plotting import colour_style, plot_multi_colour_swatches
-from colour.utilities import message_box
 from colour.notation.hexadecimal import (
-    RGB_to_HEX,
     HEX_to_RGB,
 )
 
@@ -21,7 +16,6 @@ from colour.notation.hexadecimal import (
 import math
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import numpy as np
 import pandas as pd
 
@@ -29,7 +23,6 @@ from pathlib import Path
 
 from lib.SAPC_0_98G_4g_minimal import SAPC_0_98G_4g_minimal
 
-import pudb
 
 
 class ColorUtils:

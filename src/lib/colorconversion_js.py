@@ -25,7 +25,6 @@ def PyJsHoisted_rgb_to_hsl_(r, g, b, this, arguments, var=var):
     var.put('b', Js(255.0), '/')
     var.put('max', var.get('Math').callprop('max', var.get('r'), var.get('g'), var.get('b')))
     var.put('min', var.get('Math').callprop('min', var.get('r'), var.get('g'), var.get('b')))
-    pass
     var.put('l', ((var.get('max')+var.get('min'))/Js(2.0)))
     if (var.get('max')==var.get('min')):
         var.put('h', var.put('s', Js(0.0)))
@@ -74,11 +73,9 @@ def PyJsHoisted_hsl_to_rgb_(h, s, l, this, arguments, var=var):
         return var.get('p')
     PyJsHoisted_hue_to_rgb_.func_name = 'hue_to_rgb'
     var.put('hue_to_rgb', PyJsHoisted_hue_to_rgb_)
-    pass
     if (var.get('s')==Js(0.0)):
         var.put('r', var.put('g', var.put('b', var.get('l'))))
     else:
-        pass
         var.put('q', ((var.get('l')*(Js(1.0)+var.get('s'))) if (var.get('l')<Js(0.5)) else ((var.get('l')+var.get('s'))-(var.get('l')*var.get('s')))))
         var.put('p', ((Js(2.0)*var.get('l'))-var.get('q')))
         var.put('r', var.get('hue_to_rgb')(var.get('p'), var.get('q'), (var.get('h')+(Js(1.0)/Js(3.0)))))
@@ -94,7 +91,6 @@ def PyJsHoisted_rgb_to_hsv_(r, g, b, this, arguments, var=var):
     PyJsComma(PyJsComma(var.put('r', (var.get('r')/Js(255.0))),var.put('g', (var.get('g')/Js(255.0)))),var.put('b', (var.get('b')/Js(255.0))))
     var.put('max', var.get('Math').callprop('max', var.get('r'), var.get('g'), var.get('b')))
     var.put('min', var.get('Math').callprop('min', var.get('r'), var.get('g'), var.get('b')))
-    pass
     var.put('v', var.get('max'))
     var.put('d', (var.get('max')-var.get('min')))
     var.put('s', (Js(0.0) if (var.get('max')==Js(0.0)) else (var.get('d')/var.get('max'))))
@@ -126,7 +122,6 @@ var.put('rgb_to_hsv', PyJsHoisted_rgb_to_hsv_)
 def PyJsHoisted_hsv_to_rgb_(h, s, v, this, arguments, var=var):
     var = Scope({'h':h, 's':s, 'v':v, 'this':this, 'arguments':arguments}, var)
     var.registers(['r', 'h', 'b', 'g', 'f', 'q', 't', 'i', 'p', 'v', 's'])
-    pass
     var.put('i', var.get('Math').callprop('floor', (var.get('h')*Js(6.0))))
     var.put('f', ((var.get('h')*Js(6.0))-var.get('i')))
     var.put('p', (var.get('v')*(Js(1.0)-var.get('s'))))
@@ -240,7 +235,6 @@ var.put('toe_inv', PyJsHoisted_toe_inv_)
 def PyJsHoisted_compute_max_saturation_(a, b, this, arguments, var=var):
     var = Scope({'a':a, 'b':b, 'this':this, 'arguments':arguments}, var)
     var.registers(['k2', 'k0', 'l_dS', 'k3', 'S', 'wl', 'b', 'f', 'k4', 'k_m', 'm_dS2', 'f1', 's', 'k1', 'l', 'wm', 'k_s', 'k_l', 'm_dS', 'f2', 'l_dS2', 'ws', 'm_', 's_', 's_dS2', 's_dS', 'a', 'l_', 'm'])
-    pass
     if ((((-Js(1.88170328))*var.get('a'))-(Js(0.80936493)*var.get('b')))>Js(1.0)):
         var.put('k0', (+Js(1.19086277)))
         var.put('k1', (+Js(1.76576728)))
@@ -309,7 +303,6 @@ def PyJsHoisted_find_gamut_intersection_(a, b, L1, C1, L0, cusp, this, arguments
     var.registers(['C1', 'mdt2', 'g', 'b1', 'r2', 'dL', 'g1', 'm_dt', 'u_g', 'u_b', 'b', 'L0', 's_dt', 'mdt', 'C', 'k_m', 'g2', 'dC', 's', 'l', 't_g', 'l_dt', 'k_s', 'k_l', 'sdt', 't', 't_r', 'L1', 'b2', 'm_', 't_b', 'r', 's_', 'r1', 'u_r', 'sdt2', 'a', 'cusp', 'L', 'l_', 'm', 'ldt2', 'ldt'])
     if var.get('cusp').neg():
         var.put('cusp', var.get('find_cusp')(var.get('a'), var.get('b')))
-    pass
     if ((((var.get('L1')-var.get('L0'))*var.get('cusp').get('1'))-((var.get('cusp').get('0')-var.get('L0'))*var.get('C1')))<=Js(0.0)):
         var.put('t', ((var.get('cusp').get('1')*var.get('L0'))/((var.get('C1')*var.get('cusp').get('0'))+(var.get('cusp').get('1')*(var.get('L0')-var.get('L1'))))))
     else:
@@ -388,11 +381,9 @@ def PyJsHoisted_get_Cs_(L, a_, b_, this, arguments, var=var):
     var.put('S_mid', (Js(0.11516993)+(Js(1.0)/(((+Js(7.4477897))+(Js(4.1590124)*var.get('b_')))+(var.get('a_')*(((-Js(2.19557347))+(Js(1.75198401)*var.get('b_')))+(var.get('a_')*(((-Js(2.13704948))-(Js(10.02301043)*var.get('b_')))+(var.get('a_')*(((-Js(4.24894561))+(Js(5.38770819)*var.get('b_')))+(Js(4.69891013)*var.get('a_'))))))))))))
     var.put('T_mid', (Js(0.11239642)+(Js(1.0)/(((+Js(1.6132032))-(Js(0.68124379)*var.get('b_')))+(var.get('a_')*(((+Js(0.40370612))+(Js(0.90148123)*var.get('b_')))+(var.get('a_')*(((-Js(0.27087943))+(Js(0.6122399)*var.get('b_')))+(var.get('a_')*(((+Js(0.00299215))-(Js(0.45399568)*var.get('b_')))-(Js(0.14661872)*var.get('a_'))))))))))))
     var.put('k', (var.get('C_max')/var.get('Math').callprop('min', (var.get('L')*var.get('ST_max').get('0')), ((Js(1.0)-var.get('L'))*var.get('ST_max').get('1')))))
-    pass
     var.put('C_a', (var.get('L')*var.get('S_mid')))
     var.put('C_b', ((Js(1.0)-var.get('L'))*var.get('T_mid')))
     var.put('C_mid', ((Js(0.9)*var.get('k'))*var.get('Math').callprop('sqrt', var.get('Math').callprop('sqrt', (Js(1.0)/((Js(1.0)/(((var.get('C_a')*var.get('C_a'))*var.get('C_a'))*var.get('C_a')))+(Js(1.0)/(((var.get('C_b')*var.get('C_b'))*var.get('C_b'))*var.get('C_b')))))))))
-    pass
     var.put('C_a', (var.get('L')*Js(0.4)))
     var.put('C_b', ((Js(1.0)-var.get('L'))*Js(0.8)))
     var.put('C_0', var.get('Math').callprop('sqrt', (Js(1.0)/((Js(1.0)/(var.get('C_a')*var.get('C_a')))+(Js(1.0)/(var.get('C_b')*var.get('C_b')))))))
@@ -415,7 +406,6 @@ def PyJsHoisted_okhsl_to_srgb_(h, s, l, this, arguments, var=var):
     var.put('C_0', var.get('Cs').get('0'))
     var.put('C_mid', var.get('Cs').get('1'))
     var.put('C_max', var.get('Cs').get('2'))
-    pass
     if (var.get('s')<Js(0.8)):
         var.put('t', (Js(1.25)*var.get('s')))
         var.put('k_0', Js(0.0))
@@ -445,7 +435,6 @@ def PyJsHoisted_srgb_to_okhsl_(r, g, b, this, arguments, var=var):
     var.put('C_0', var.get('Cs').get('0'))
     var.put('C_mid', var.get('Cs').get('1'))
     var.put('C_max', var.get('Cs').get('2'))
-    pass
     if (var.get('C')<var.get('C_mid')):
         var.put('k_0', Js(0.0))
         var.put('k_1', (Js(0.8)*var.get('C_0')))
@@ -560,34 +549,9 @@ def PyJsHoisted_rgb_to_hex_(r, g, b, this, arguments, var=var):
         return ((Js('0')+var.get('hex')) if (var.get('hex').get('length')==Js(1.0)) else var.get('hex'))
     PyJsHoisted_componentToHex_.func_name = 'componentToHex'
     var.put('componentToHex', PyJsHoisted_componentToHex_)
-    pass
     return (((Js('#')+var.get('componentToHex')(var.get('r')))+var.get('componentToHex')(var.get('g')))+var.get('componentToHex')(var.get('b')))
 PyJsHoisted_rgb_to_hex_.func_name = 'rgb_to_hex'
 var.put('rgb_to_hex', PyJsHoisted_rgb_to_hex_)
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
 
 
 # Add lib to the module scope
