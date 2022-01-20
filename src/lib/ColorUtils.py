@@ -4,7 +4,7 @@ class that deals with color convertion and measurement routines
 
 import pudb
 from colormath.color_diff import delta_e_cmc, delta_e_cie2000
-from colormath.color_objects import LabColor, sRGBColor, HSVColor
+from colormath.color_objects import LabColor, sRGBColor, HSVColor, HSLColor
 from colormath.color_conversions import convert_color
 
 # TODO: switch from colormath to colour
@@ -175,6 +175,17 @@ class ColorUtils:
         c =  sRGBColor(r, g, b)
         lab = convert_color(c, LabColor)
         return lab
+
+    @staticmethod
+    def convert_color_rgbhex_to_hsl(hex):
+        """
+        convert color from rgbhex to lab
+        """
+        rgb =  HEX_to_RGB(hex)
+
+        c =  sRGBColor(*rgb)
+        hsl = convert_color(c, HSLColor)
+        return hsl
 
     def delta_e_rgbhex(self, color1, color2):
         delta = delta_e_cie2000(self.convert_color_rgbhex_to_lab(color1), self.convert_color_rgbhex_to_lab(color2))
