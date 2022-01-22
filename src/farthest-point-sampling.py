@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import numpy as np
 import meshio
 from json_tricks import dumps
+from pathlib import Path
 
 
 from lib.ColorUtils import ColorUtils
@@ -42,15 +43,17 @@ def run_fps(pts, tag):
         selected_pts = fps.run()  # Get all samples.
         #print_delta_e_hsv_stats(n_samples,selected_pts)
         min_delta_e = c.print_delta_e_rgb_stats(n_samples,selected_pts)
-        c.saveplot_delta_e_rgb_stats(tag, n_samples,selected_pts, min_delta_e)
+        #c.saveplot_delta_e_rgb_stats(tag, n_samples,selected_pts, min_delta_e)
         color_list[n_samples] = c.rgb_to_hex(selected_pts)
         delta_list[n_samples] = min_delta_e
 
     # save color_list and delta results
-    file_color_list = f"res/rgb_{tag}_color_list.json"
+    dir = "res/json"
+    Path(dir).mkdir(parents=True, exist_ok=True)
+    file_color_list = f"{dir}/rgb_{tag}_color_list.json"
     write_json_file(file_color_list, color_list)
 
-    file_delta_list = f"res/rgb_{tag}_delta_list.json"
+    file_delta_list = f"{dir}/rgb_{tag}_delta_list.json"
     write_json_file(file_delta_list, delta_list)
 
 

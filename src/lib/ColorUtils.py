@@ -20,6 +20,9 @@ import numpy as np
 import pandas as pd
 
 from pathlib import Path
+from scipy.interpolate import Akima1DInterpolator
+from scipy.interpolate import splrep, splev
+import pudb
 
 from lib.SAPC_0_98G_4g_minimal import SAPC_0_98G_4g_minimal
 
@@ -235,31 +238,45 @@ class ColorUtils:
             return round(min_delta)
 
 
-    def saveplot_delta_e_rgb_stats(self, tag, n_samples, colors_rgb, min_delta_e):
+    def saveplot_delta_e_rgb_stats(self, tag, n_samples, colors_rgb, min_delta, min_delta_list):
         """
         plt.style.use(['dark_background'])
          ['Solarize_Light2', '_classic_test_patch', '_mpl-gallery', '_mpl-gallery-nogrid', 'bmh', 'classic', 'dark_background', 'fast', 'fivethirtyeight', 'ggplot', 'grayscale', 'seaborn', 'seaborn-bright', 'seaborn-colorblind', 'seaborn-dark', 'seaborn-dark-palette', 'seaborn-darkgrid', 'seaborn-deep', 'seaborn-muted', 'seaborn-notebook', 'seaborn-paper', 'seaborn-pastel', 'seaborn-poster', 'seaborn-talk', 'seaborn-ticks', 'seaborn-white', 'seaborn-whitegrid', 'tableau-colorblind10']
         """
 
-        if min_delta_e == math.inf:
+        if min_delta == math.inf:
             comment = f"{n_samples} colors with lightness={tag} delta = undefined"
         else:
-            comment = f"{n_samples} colors with lightness={tag} delta = {round(min_delta_e)}"
+            comment = f"{n_samples} colors with lightness={tag} delta = {round(min_delta)}"
 
         styles = {'dark': 'dark_background', 'light': 'classic'}
         for type,style in styles.items():
-            dir = f"res/images_{tag}/{type}"
+            dir = f"res/images/plot/{type}"
             Path(dir).mkdir(parents=True, exist_ok=True)
-            filename = f"{dir}/img{n_samples}.png"
-            self.plot_helper(style, comment, n_samples, colors_rgb, filename)
+            filename = f"{dir}/plot_{tag}_n{n_samples}.png"
+            self.plot_helper(style, comment, n_samples, colors_rgb, min_delta, min_delta_list, filename)
+
+    def saveplot_delta_plot_alln(self, dir, tag, theme, items, min_delta_list):
+        """
+        read in json after the run and produce plot files
+        """
+        for key, values in items.items():
+            min_delta = min_delta_list.get(key, 0)
+            #print(f"{key} -> {values} min_delta = {min_delta}")
+            n_samples = len(values)
+            self.saveplot_delta_e_rgb_stats(tag, n_samples, values, min_delta, min_delta_list)
 
 
-    def plot_helper(self, style, comment, n_samples, colors_rgb, filename):
 
-        colors_rgbhex = self.rgb_to_hex(colors_rgb)
+    def plot_helper(self, style, comment, n_samples, colors_rgbhex, min_delta, min_delta_list, filename):
+
+        #colors_rgbhex = self.rgb_to_hex(colors_rgb)
 
         plt.style.use([style])
-        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots()
+        # see https://stackoverflow.com/questions/28757348/how-to-clear-memory-completely-of-all-matplotlib-plots
+        fig, ax = plt.subplots(num=1,clear=True)
+        
 
         gs = fig.add_gridspec(2, 2, hspace=0, wspace=0)
         axs = gs.subplots()
@@ -279,9 +296,30 @@ class ColorUtils:
         # ar[::-1] flips values to be fair
         ax3.bar(range(n_samples),x[::-1], color=colors_rgbhex)
 
-        # random streamgraph
-        ys = np.random.randint(1,100,size=(n_samples,5))
-        ax4.stackplot(range(5), ys, baseline='wiggle', colors=colors_rgbhex)
+        #print(f" min_delta_list = {min_delta_list}")
+        if min_delta_list.get('1'):
+            del min_delta_list['1']
+        x4, y4 = list(min_delta_list.keys()) , list(min_delta_list.values())
+        x4 = list(map(float, x4))
+        y4 = list(map(float, y4))
+        #print(f"y4 = {y4} len(x4) = {len(x4)}")
+        bspl = splrep(x4,y4,s=50)
+        y4_new = splev(x4,bspl)
+        #ax4.plot(x4 , y4)
+        ax4.plot(x4, y4_new)
+        comment = f"{n_samples} colors with delta={min_delta}"
+        xoffset = 10 * (15 - n_samples)
+        yoffset =  5 * (n_samples - 3)
+        if n_samples >= 2:
+            ax4.annotate(comment, xy=(x4[n_samples-2], y4[n_samples-2]), xytext=(xoffset,yoffset), 
+                textcoords='offset points', ha='center', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='red'))
+
+
+        # # random streamgraph
+        # ys = np.random.randint(1,100,size=(n_samples,5))
+        # ax4.stackplot(range(5), ys, baseline='wiggle', colors=colors_rgbhex)
 
         for ax in axs.flat:
             ax.axes.xaxis.set_ticklabels([])
@@ -297,7 +335,7 @@ class ColorUtils:
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
 
 
-        #print(f"writing to {filename}")
+        print(f"writing to {filename}")
         plt.savefig(filename,
            dpi=300, 
            transparent=True,
@@ -305,7 +343,12 @@ class ColorUtils:
            bbox_extra_artists=(lg,tl), 
            bbox_inches='tight')
 
-        plt.close()
+        # reclaim memory
+        #plt.figure().clear()
+        #plt.close('all')
+        #plt.cla()
+        #plt.clf()
+
 
 
 

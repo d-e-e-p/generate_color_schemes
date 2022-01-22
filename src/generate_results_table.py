@@ -98,7 +98,7 @@ def calc_tile_width(n):
         # distribute over lines
         width = (target_total_width - padding_corr)  / float(n)
         tile_width = (width - border_padding)
-        cmt += f"n={n} num_lines={num_lines} target_total_width={target_total_width} width = ({target_total_width} - {padding_corr})/{n} = {width} so tile_width={width} - {border_padding} = {tile_width}"
+        cmt += f"n={n} num_lines={num_lines} target_total_width={target_total_width} width = ({target_total_width} - {padding_corr})/{n} = {width:.2f} so tile_width={width:.2f} - {border_padding} = {tile_width:.2f}"
 
     tile_width = float(f"{tile_width:.2f}")
     cmt += f"n={n} tile_width={tile_width}"
@@ -128,6 +128,10 @@ html {
 h1 { 
     font-size: 3vw; float: none; text-align: center; margin: 1%; 
 }
+h2 { 
+    font-size: 2vw; float: none; text-align: center; margin: 1%; 
+}
+
 
 body {
     margin: 0;
@@ -203,10 +207,12 @@ body {
         print(f"tag={tag} not matched pattern")
         sys.exit(-1)
 
-    title = f"swatches for {n} colors of lightness from {tag_from} to {tag_to} sorted by {sortby}"
+    h1 = f"swatches for {n} colors {tag_from} to {tag_to} lightness"
+    h2 = f"sorted by {sortby}"
     html += f"""
-            <h1>{title}</h1>
-            <div class="wrapper" title="{title}">
+            <h1>{h1}</h1>
+            <h2>{h2}</h2>
+            <div class="wrapper" title="{h1}">
             """
 
     return html
@@ -258,7 +264,7 @@ def generate_table_sortby_hue(colors, color2name):
         fg = get_fg_from_color(color)
         style = f"background-color:{color};color:{fg}"
         #html += """<label for="favcolor">"""
-        html += f'<div class="box" style="{style}"><sup>H={hue:.0f}</sup><br>{color}<br><sub>{name}</sub></div>\n'
+        html += f'<div class="box" style="{style}"><sup>H={hue:.0f}°</sup><br>{color}<br><sub>{name}</sub></div>\n'
         #html += f"""</label><input type="color" id="favcolor" name="favcolor" value="{color}">"""
 
     html += f"""

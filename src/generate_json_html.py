@@ -23,42 +23,12 @@ def read_json_file(filename):
     items = loads(json)
     return items
 
-
 def write_html_file(dir, html, tag, theme, sortby):
     filename = f"{dir}/{theme}/{sortby}/res_lightness_{tag}.html"
     fp = open(filename , 'w')
     fp.write(html)
     fp.close()
     print(f"written {filename}")
-
-def sort_by_lightness(colors):
-
-    color_list = []
-    for col in colors:
-        lightness = c.lightness_hk_rgbhex(col)
-        color_list.append([lightness,col])
-
-    return sorted(color_list)
-
-def sort_by_hue(colors):
-
-    color_list = []
-    for col in colors:
-        hsl = c.convert_color_rgbhex_to_hsl(col)
-        hue = hsl.hsl_h
-        color_list.append([hue,col])
-
-    return sorted(color_list)
-
-def sort_by_saturation(colors):
-
-    color_list = []
-    for col in colors:
-        hsl = c.convert_color_rgbhex_to_hsl(col)
-        saturation = hsl.hsl_s
-        color_list.append([saturation,col])
-
-    return sorted(color_list)
 
 def get_values_with_attr(values, sortby, color2name):
 
@@ -77,8 +47,6 @@ def get_values_with_attr(values, sortby, color2name):
     values_with_attr = sorted(values_with_attr, key=lambda x: x[order])
     return values_with_attr
 
-
-
 def get_fg_from_color(color):
     """
     super simplistic version for now 
@@ -89,38 +57,6 @@ def get_fg_from_color(color):
         return "black"
     else:
         return "white"
-
-def calc_tile_width(n):
-    """
-        100% = full width
-    """
-    border_padding   = 3
-    min_width        = 8
-    min_line_padding = 3   # for stuff
-    min_width        = 11  # includes 2 for border on each side and 1 for padding
-    max_width        = 43  # half the page
-
-    min_total_width = n * min_width - min_line_padding
-    cmt = f"debug: min_total_width = {min_total_width} \n"
-    if min_total_width < 100:
-        width = (100  - min_line_padding) / float(n)
-        if width > max_width:
-            tile_width = (max_width - border_padding)
-        else:
-            tile_width = (width - border_padding)
-        cmt += "single line, width = {width} so tile_width={tile_width}"
-    else:
-        num_lines = math.ceil(min_total_width / 100)
-        target_total_width = num_lines * 100
-        padding_corr = num_lines * min_line_padding
-        # distribute over lines
-        width = (target_total_width - padding_corr)  / float(n)
-        tile_width = (width - border_padding)
-        cmt += f"n={n} num_lines={num_lines} target_total_width={target_total_width} width = ({target_total_width} - {padding_corr})/{n} = {width} so tile_width={width} - {border_padding} = {tile_width}"
-
-    tile_width = float(f"{tile_width:.2f}")
-    cmt += f"n={n} tile_width={tile_width}"
-    return tile_width, cmt
 
 def generate_table_header(tag, theme, sortby):
     #print(f"running tag {tag} for {n} {theme}")
@@ -149,6 +85,9 @@ h1 {
 }
 h2 { 
     font-size: 2vw; float: none; text-align: center; margin: 1%; 
+}
+h3 { 
+    font-size: 1vw; float: none; text-align: center; margin: 1%; 
 }
 
 body {
@@ -210,21 +149,19 @@ body {
         print(f"tag={tag} not matched pattern")
         sys.exit(-1)
 
-    title = f"colors of lightness from {tag_from} to {tag_to}" 
+    title = f"colors from {tag_from} to {tag_to} lightness " 
     html += f"""
 
 <h1 class="noselect">{title}</h1>
 <h2 class="noselect">num_colors: [rgbhex, lightness, hue, saturation, name]</h2>
-<h2 class="noselect">Usage: select-all, copy, paste a valid json file</h2>
+<h3 class="noselect">( sorted by {sortby} )<h2>
+<h3 class="noselect">Usage: Select-All, Copy, Paste a valid unicode json file</h2>
 
 <div id="scissors"></div>
 <div class="container">
             """
 
     return html
-
-
-
 
 def generate_table_body(sortby, items, color2name):
 
@@ -263,6 +200,7 @@ def generate_table_footer():
     html = f"""
 </div>
 <div id="scissors"></div>
+<h3 class="noselect">Color names from <a href=https://github.com/meodai/color-names>https://github.com/meodai/color-names</a></h3>
 </body>
 </html>
     """
@@ -278,7 +216,6 @@ def generate_table(tag, theme, sortby, items, color2name ):
     html += generate_table_footer()
 
     return html
-
 
 
 def main():
