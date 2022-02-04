@@ -29,12 +29,14 @@ def read_json_file(filename):
 
 def main():
 
-    dir = "res/html/plots"
+    dir = "res/plots"
     themes =  "dark light".split()
+    types  =  "delta examples".split()
 
     # make dirs upfront
-    for theme in themes:
-        Path(f"{dir}/{theme}").mkdir(parents=True, exist_ok=True)
+    for type in types:
+        for theme in themes:
+            Path(f"{dir}/{type}/{theme}").mkdir(parents=True, exist_ok=True)
 
     # name info
     json_file = "res/json/color2name.json"
@@ -55,8 +57,9 @@ def main():
             tag = match[1]
             file2 = f"res/json/rgb_{tag}_delta_list.json"
             min_delta_list = read_json_file(file2)
-            for theme in themes:
-                c.saveplot_delta_plot_alln(dir, tag, theme, items, min_delta_list)
+            for type in types:
+                for theme in themes:
+                    c.saveplot_delta_plot_alln(dir, type, tag, theme, items, min_delta_list)
 
 
 if __name__ == '__main__':

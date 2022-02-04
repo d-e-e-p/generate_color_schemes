@@ -53,7 +53,7 @@ def get_fg_from_color(color):
     TODO: refine selection
     """
     lightness = c.lightness_hk_rgbhex(color)
-    if lightness > 50:
+    if lightness > 60:
         return "black"
     else:
         return "white"
@@ -61,12 +61,14 @@ def get_fg_from_color(color):
 def generate_table_header(tag, theme, sortby):
     #print(f"running tag {tag} for {n} {theme}")
 
+    white = "#E8E8E8"
+    black = "#1C1C1C"
     if theme == "dark":
-        fgcolor = "white"
-        bgcolor = "black"
+        fgcolor = white
+        bgcolor = black
     else:
-        fgcolor = "black"
-        bgcolor = "white"
+        fgcolor = black
+        bgcolor = white
   
     # calculate width per tile
 
@@ -99,7 +101,7 @@ body {
     height: 43px; /* image height */
     width: 90%;
     margin: auto auto;
-    background-image: url('http://i.stack.imgur.com/cXciH.png');
+    background-image: url('/assets/images/hand_for_""" + theme + """.png');
     background-repeat: no-repeat;
     background-position: right;
     position: relative;
@@ -110,7 +112,7 @@ body {
     position: relative;
     top: 50%;
     display: block;
-    border-top: 3px dashed black;
+    border-top: 3px dashed """ + fgcolor + """;
     margin-top: -3px;
 }
 

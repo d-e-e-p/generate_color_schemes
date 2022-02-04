@@ -5,6 +5,7 @@ class that deals with color convertion and measurement routines
 from colormath.color_diff import delta_e_cie2000
 from colormath.color_objects import LabColor, sRGBColor, HSVColor, HSLColor
 from colormath.color_conversions import convert_color
+from itertools import product
 
 # TODO: switch from colormath to colour
 import colour
@@ -14,6 +15,8 @@ from colour.notation.hexadecimal import (
 
 
 import math
+import random
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -238,25 +241,30 @@ class ColorUtils:
             return round(min_delta)
 
 
-    def saveplot_delta_e_rgb_stats(self, tag, n_samples, colors_rgb, min_delta, min_delta_list):
+    def saveplot_delta_e_rgb_stats(self, dir, type, tag, theme, n_samples, colors_rgb, min_delta, min_delta_list):
         """
         plt.style.use(['dark_background'])
          ['Solarize_Light2', '_classic_test_patch', '_mpl-gallery', '_mpl-gallery-nogrid', 'bmh', 'classic', 'dark_background', 'fast', 'fivethirtyeight', 'ggplot', 'grayscale', 'seaborn', 'seaborn-bright', 'seaborn-colorblind', 'seaborn-dark', 'seaborn-dark-palette', 'seaborn-darkgrid', 'seaborn-deep', 'seaborn-muted', 'seaborn-notebook', 'seaborn-paper', 'seaborn-pastel', 'seaborn-poster', 'seaborn-talk', 'seaborn-ticks', 'seaborn-white', 'seaborn-whitegrid', 'tableau-colorblind10']
         """
+        styles = {'dark': 'dark_background', 'light': 'classic'}
+        style = styles[theme]
 
         if min_delta == math.inf:
             comment = f"{n_samples} colors with lightness={tag} delta = undefined"
         else:
             comment = f"{n_samples} colors with lightness={tag} delta = {round(min_delta)}"
 
-        styles = {'dark': 'dark_background', 'light': 'classic'}
-        for type,style in styles.items():
-            dir = f"res/images/plot/{type}"
-            Path(dir).mkdir(parents=True, exist_ok=True)
-            filename = f"{dir}/plot_{tag}_n{n_samples}.png"
-            self.plot_helper(style, comment, n_samples, colors_rgb, min_delta, min_delta_list, filename)
+     
+        filename = f"{dir}/{type}/{theme}/plot_{tag}_n{n_samples}.png"
+      
+        if (type == "delta"):
+            self.plot_helper_delta(filename , style, comment, n_samples, colors_rgb, min_delta, min_delta_list, )
+        if (type == "examples"):
+            self.plot_helper_examples(filename , style, comment, n_samples, colors_rgb, min_delta, min_delta_list, )
+        
 
-    def saveplot_delta_plot_alln(self, dir, tag, theme, items, min_delta_list):
+
+    def saveplot_delta_plot_alln(self, type, dir, tag, theme, items, min_delta_list):
         """
         read in json after the run and produce plot files
         """
@@ -264,15 +272,54 @@ class ColorUtils:
             min_delta = min_delta_list.get(key, 0)
             #print(f"{key} -> {values} min_delta = {min_delta}")
             n_samples = len(values)
-            self.saveplot_delta_e_rgb_stats(tag, n_samples, values, min_delta, min_delta_list)
+            self.saveplot_delta_e_rgb_stats(type, dir, tag, theme, n_samples, values, min_delta, min_delta_list)
 
 
+    # from https://matplotlib.org/3.1.1/gallery/userdemo/demo_gridspec06.html
+    @staticmethod
+    def squiggle_xy(a, b, c, d, i=np.arange(0.0, 2*np.pi, 0.05)):
+        return np.sin(i*a)*np.cos(i*b), np.sin(i*c)*np.cos(i*d)
 
-    def plot_helper(self, style, comment, n_samples, colors_rgbhex, min_delta, min_delta_list, filename):
+
+    def plot_doodle(self, fig, gs, axes, n_samples, colors_rgbhex):
+
+      index_color = 0;
+
+      outer_grid = gs.subgridspec(4, 4, wspace=0.0, hspace=0.0)
+      for i in range(16):
+        inner_grid = outer_grid[i].subgridspec(3, 3, wspace=0.0, hspace=0.0)
+        a, b = int(i/4)+1, i % 4+1
+        for j, (c, d) in enumerate(product(range(1, 4), repeat=2)):
+            ax = fig.add_subplot(inner_grid[j])
+            rgb = colors_rgbhex[index_color]
+            index_color += 1
+            if (index_color == n_samples):
+                index_color = 0
+
+            #print(f"i={i} a={a} b={b} j={j} c={c} d={d}")
+            ax.plot(*ColorUtils.squiggle_xy(a, b, c, d), c=rgb)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            fig.add_subplot(ax)
+
+            for sp in ax.spines.values():
+                sp.set_visible(False)
+            if ax.get_subplotspec().is_first_row():
+                ax.spines['top'].set_visible(True)
+            if ax.get_subplotspec().is_last_row():
+                ax.spines['bottom'].set_visible(True)
+            if ax.get_subplotspec().is_first_col():
+                ax.spines['left'].set_visible(True)
+            if ax.get_subplotspec().is_last_col():
+                ax.spines['right'].set_visible(True)
+
+
+    def plot_helper_examples(self, filename, style, comment, n_samples, colors_rgbhex, min_delta, min_delta_list,):
 
         #colors_rgbhex = self.rgb_to_hex(colors_rgb)
 
         plt.style.use([style])
+        plt.tick_params(left = False, labelleft = False , labelbottom = False, bottom = False)
         #fig, ax = plt.subplots()
         # see https://stackoverflow.com/questions/28757348/how-to-clear-memory-completely-of-all-matplotlib-plots
         fig, ax = plt.subplots(num=1,clear=True)
@@ -287,6 +334,17 @@ class ColorUtils:
             label = f" {hex}"
             df=pd.DataFrame({'x_values': range(1,6), label: np.random.randn(5)})
             ax1.plot( 'x_values', label, data=df, marker='o', markerfacecolor=hex, markersize=12, color=hex, linewidth=4)
+
+        # add a legend based on first graph
+        if (n_samples < 15):
+            font_size = 10
+        else:
+            font_size = 8
+
+        lines, labels = ax1.get_legend_handles_labels()
+        lg = plt.legend(lines, labels, bbox_to_anchor=(1.05, 1.0), loc='center left', prop={'family': 'monospace', 'size': font_size })
+
+
         # random pie chart
         x = np.random.randint(1,100,len(colors_rgbhex))
         ax2.pie(x,colors=colors_rgbhex)
@@ -296,26 +354,7 @@ class ColorUtils:
         # ar[::-1] flips values to be fair
         ax3.bar(range(n_samples),x[::-1], color=colors_rgbhex)
 
-        #print(f" min_delta_list = {min_delta_list}")
-        if min_delta_list.get('1'):
-            del min_delta_list['1']
-        x4, y4 = list(min_delta_list.keys()) , list(min_delta_list.values())
-        x4 = list(map(float, x4))
-        y4 = list(map(float, y4))
-        #print(f"y4 = {y4} len(x4) = {len(x4)}")
-        bspl = splrep(x4,y4,s=50)
-        y4_new = splev(x4,bspl)
-        #ax4.plot(x4 , y4)
-        ax4.plot(x4, y4_new)
-        comment = f"{n_samples} colors with delta={min_delta}"
-        xoffset = 10 * (15 - n_samples)
-        yoffset =  5 * (n_samples - 3)
-        if n_samples >= 2:
-            ax4.annotate(comment, xy=(x4[n_samples-2], y4[n_samples-2]), xytext=(xoffset,yoffset), 
-                textcoords='offset points', ha='center', va='bottom',
-                bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='red'))
-
+        self.plot_doodle(fig, gs[3], ax4, n_samples, colors_rgbhex)
 
         # # random streamgraph
         # ys = np.random.randint(1,100,size=(n_samples,5))
@@ -324,12 +363,15 @@ class ColorUtils:
         for ax in axs.flat:
             ax.axes.xaxis.set_ticklabels([])
             ax.axes.yaxis.set_ticklabels([])
+            ax.get_xaxis().set_ticks([])
+            ax.get_yaxis().set_ticks([])
 
-        tl = fig.suptitle(comment)
+        plt.setp(axs, xticks=[], yticks=[])
+
+        #tl = fig.suptitle(comment)
         #plt.legend(loc='right')
         #ax1.legend(loc=7)
-        lines, labels = ax1.get_legend_handles_labels()
-        lg = plt.legend(lines, labels, bbox_to_anchor=(1.05, 1.0), loc='center left')
+
 
 
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
@@ -340,7 +382,6 @@ class ColorUtils:
            dpi=300, 
            transparent=True,
            format='png', 
-           bbox_extra_artists=(lg,tl), 
            bbox_inches='tight')
 
         # reclaim memory
@@ -348,6 +389,63 @@ class ColorUtils:
         #plt.close('all')
         #plt.cla()
         #plt.clf()
+
+
+
+    def plot_helper_delta(self, filename, style, comment, n_samples, colors_rgbhex, min_delta, min_delta_list,):
+
+        #colors_rgbhex = self.rgb_to_hex(colors_rgb)
+
+        plt.style.use([style])
+        plt.tick_params(left = False, labelleft = False , labelbottom = False, bottom = False)
+        #fig, ax = plt.subplots()
+        # see https://stackoverflow.com/questions/28757348/how-to-clear-memory-completely-of-all-matplotlib-plots
+        fig, ax = plt.subplots(num=1,clear=True)
+        ax.set_aspect(0.5) 
+
+        # real data for n vs delta for 4th graph
+        #print(f" min_delta_list = {min_delta_list}")
+        if min_delta_list.get('1'):
+            del min_delta_list['1']
+        x4, y4 = list(min_delta_list.keys()) , list(min_delta_list.values())
+        x4 = list(map(float, x4))
+        y4 = list(map(float, y4))
+        #print(f"y4 = {y4} len(x4) = {len(x4)}")
+        bspl = splrep(x4,y4,s=50)
+        y4_new = splev(x4,bspl)
+        #ax4.plot(x4 , y4)
+        ax.plot(x4, y4_new)
+        comment = f"{n_samples} colors with\ncolor delta={min_delta}"
+        if n_samples < 9:
+            xoffset = 100 
+            yoffset =  0 
+        else:
+            xoffset = -50 
+            yoffset =  50 
+
+        if n_samples >= 2:
+            ax.annotate(comment, xy=(x4[n_samples-2], y4[n_samples-2]), 
+                textcoords='axes fraction', xytext=(0.6, 0.7),
+                ha='center', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='red'))
+
+        #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
+
+        print(f"writing to {filename}")
+        plt.savefig(filename,
+           dpi=300, 
+           transparent=True,
+           format='png', 
+           bbox_inches='tight')
+
+        # reclaim memory
+        # (doesn't work...need approach of resuse above)
+        #plt.figure().clear()
+        #plt.close('all')
+        #plt.cla()
+        #plt.clf()
+
 
 
 
