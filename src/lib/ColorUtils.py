@@ -377,7 +377,8 @@ class ColorUtils:
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
 
 
-        print(f"writing to {filename}")
+        #print(f"writing to {filename}")
+        print(f"pl number {plt.get_fignums()}")
         plt.savefig(filename,
            dpi=300, 
            transparent=True,
@@ -432,7 +433,7 @@ class ColorUtils:
 
         #plt.savefig(f"res/img{n_samples}.png", facecolor=fig.get_facecolor(), transparent=True)
 
-        print(f"writing to {filename}")
+        #print(f"writing to {filename}")
         plt.savefig(filename,
            dpi=300, 
            transparent=True,

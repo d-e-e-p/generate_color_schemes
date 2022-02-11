@@ -18,7 +18,7 @@ import itertools
 from json_tricks import dumps, loads
 
 
-from colour.notation.hexadecimal import (
+from hexadecimal import (
     HEX_to_RGB,
     )
 
@@ -41,7 +41,7 @@ def convert_hex_to_list(colors2names):
 
 def read_json_file(filename):
     print(f"read {filename}")
-    with open(filename,"r+") as f:
+    with open(filename,"r+", encoding="utf8") as f:
         json = f.read()
     items = loads(json)
     return items

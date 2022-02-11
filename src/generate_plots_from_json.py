@@ -13,8 +13,13 @@ from json_tricks import loads
 from pathlib import Path
 import pudb
 
+import progressbar
+
 from lib.ColorUtils import ColorUtils
 c = ColorUtils()
+
+bar = progressbar.ProgressBar(maxval=100, \
+    widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage(), ' ', progressbar.ETA()])
 
 
 def read_json_file(filename):
@@ -41,7 +46,7 @@ def main():
     # name info
     json_file = "res/json/color2name.json"
     color2name = read_json_file(json_file)
-    print(f"color2name = {color2name}")
+    #print(f"color2name = {color2name}")
 
     # read in   res/rgb_50_to_75_color_list.json
     # read and  res/rgb_50_to_70_delta_list.json
@@ -50,7 +55,13 @@ def main():
 
     color_list = {}
     json_files = sorted(glob(pattern1))
+    bar.start()
+    i = 0
+    n = len(json_files)
     for file1 in json_files:
+        percent_complete = (100.0 * i)/n
+        bar.update(percent_complete)
+        i += 1
         items = read_json_file(file1)
         match = re.search(r"_(\d+_to_\d+)_", file1)
         if match:
@@ -60,10 +71,13 @@ def main():
             for type in types:
                 for theme in themes:
                     c.saveplot_delta_plot_alln(dir, type, tag, theme, items, min_delta_list)
+    bar.finish()
+       
 
 
 if __name__ == '__main__':
 
     main()
+    print("done")
 
 
